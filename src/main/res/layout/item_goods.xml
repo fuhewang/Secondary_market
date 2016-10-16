@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#ffffff">
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/temp_iv"
+            android:layout_centerInParent="true"
+            android:src="@drawable/ic_launcher"
+            android:scaleType="fitXY"/>
+        <TextView
+            android:layout_width="60dp"
+            android:layout_height="50dp"
+            android:text="九成"
+            android:gravity="center"
+            android:textColor="#fff"
+             android:background="@drawable/index_new"
+            android:layout_alignParentTop="true"/>
+    </RelativeLayout>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="description"
+        android:id="@+id/goods_describe_tv"
+        android:textSize="13sp"
+        android:gravity="center_horizontal"
+        android:textColor="#1f2020"
+        android:layout_marginBottom="10dp"/>
+    <TextView
+        android:layout_marginLeft="20dp"
+        android:id="@+id/goods_price_tv"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="120"
+        android:textColor="#ba0808"
+        android:textSize="12sp" />
+
+</LinearLayout>

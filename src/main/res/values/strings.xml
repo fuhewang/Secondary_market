@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">集大二手市场</string>
+    <string name="action_settings">Settings</string>
+    <string name="loginorsign">登入/注册</string>
+</resources>

@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context="com.wangfuhe.wfh.second_shop.activity.UploadGoods">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scrollbars="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#ded8d8"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#fff"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:id="@+id/goods_pic1_iv"
+                    android:layout_width="0dp"
+                    android:layout_height="130dp"
+                    android:layout_margin="5dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/shape_goods_line"
+                    android:src="@drawable/uploadpic" />
+
+                <ImageView
+                    android:id="@+id/goods_pic2_iv"
+                    android:layout_width="0dp"
+                    android:layout_height="130dp"
+                    android:layout_margin="5dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/shape_goods_line"
+                    android:src="@drawable/uploadpic" />
+
+                <ImageView
+                    android:id="@+id/goods_pic3_iv"
+                    android:layout_width="0dp"
+                    android:layout_height="130dp"
+                    android:layout_margin="5dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/shape_goods_line"
+                    android:src="@drawable/uploadpic" />
+
+            </LinearLayout>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:background="#fff"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/temp_category_tv"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginLeft="80dp"
+                    android:layout_marginTop="6dp"
+                    android:text="选择分类:"
+                    android:textSize="16sp"
+                    android:layout_centerVertical="true"/>
+
+                <Spinner
+                    android:layout_alignBottom="@id/temp_category_tv"
+                    android:layout_toRightOf="@id/temp_category_tv"
+                    android:id="@+id/goods_category_sp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_alignParentTop="true"
+                    android:layout_alignParentRight="true"
+                    android:layout_alignParentEnd="true" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="150dp"
+                android:layout_marginTop="10dp"
+                android:background="#fff">
+
+                <EditText
+                    android:id="@+id/goods_describe_et"
+                    android:layout_width="match_parent"
+                    android:layout_height="130dp"
+                    android:layout_centerInParent="true"
+                    android:layout_margin="17dp"
+                    android:background="@drawable/descri_shape"
+                    android:gravity="top"
+                    android:hint="物品的描述，说说宝贝的特征……"
+                    android:padding="4dp" />
+            </RelativeLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:background="#fff"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:text="新旧程度"
+                    android:textSize="18sp" />
+
+                <RatingBar
+                    style="@style/Base.Widget.AppCompat.RatingBar"
+                    android:id="@+id/goods_nodegree_rb"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:background="#fff">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="价格"
+                    android:textSize="18sp" />
+
+                <EditText
+                    android:id="@+id/goods_minprice_et"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="20dp"
+                    android:hint="100"
+                    android:textColor="#f00"
+                    android:textSize="18sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="~"
+                    android:textSize="25sp" />
+
+                <EditText
+                    android:id="@+id/goods_maxprice_et"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:hint="200"
+                    android:textColor="#f00"
+                    android:textSize="18sp" />
+            </LinearLayout>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="150dp"
+                android:layout_marginTop="10dp"
+                android:background="#fff">
+
+                <EditText
+                    android:id="@+id/goods_wttrade_et"
+                    android:layout_width="match_parent"
+                    android:layout_height="130dp"
+                    android:layout_centerInParent="true"
+                    android:layout_margin="17dp"
+                    android:background="@drawable/descri_shape"
+                    android:gravity="top"
+                    android:hint="有什么特殊要求，例如物物交换……"
+                    android:padding="4dp" />
+            </RelativeLayout>
+
+            <Button
+                android:id="@+id/goods_upload_btn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/shape_collect_btn"
+                android:text="上传"
+                android:textColor="#fff"
+                android:layout_gravity="center_horizontal"/>
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>
