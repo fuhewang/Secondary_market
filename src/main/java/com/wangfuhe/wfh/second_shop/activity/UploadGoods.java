@@ -6,10 +6,9 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -21,7 +20,7 @@ import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.wangfuhe.wfh.second_shop.R;
-import com.wangfuhe.wfh.second_shop.user.Muser;
+import com.wangfuhe.wfh.second_shop.base.BaseActivity;
 import com.wangfuhe.wfh.second_shop.user.UserGoods;
 
 import java.io.File;
@@ -31,8 +30,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 
-import cn.bmob.v3.BmobUser;
 import cn.bmob.v3.datatype.BmobFile;
+import cn.bmob.v3.exception.BmobException;
 import cn.bmob.v3.listener.SaveListener;
 import cn.bmob.v3.listener.UploadFileListener;
 
@@ -40,7 +39,7 @@ import cn.bmob.v3.listener.UploadFileListener;
 /**
  * 上传物品
  */
-public class UploadGoods extends AppCompatActivity implements View.OnClickListener {
+public class UploadGoods extends BaseActivity implements View.OnClickListener {
 
     public final static int USER_CONSULT_DOC_PICTURE = 1003;//通过相册获取图片回调码
     public final static int USER_CONSULT_DOC_CAMERA = 1004;//通过照相机获取图片回调码
@@ -57,23 +56,15 @@ public class UploadGoods extends AppCompatActivity implements View.OnClickListen
     private EditText mMinPrice, mMaxPrice;//物品最高和最低价格
     private Button mGoodsUpload;//物品上传按钮
     private static int positonpic = 0;
-    private Muser userinfo;
     private BmobFile mpicture1, mpicture2, mpicture3;
     private String mcategory;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    public void initview() {
         setContentView(R.layout.activity_upload_goods);
         //初始化界面
-        initview();
+        setview();
         initListener();//设置监听
-    }
-//每次加载用户信息
-    @Override
-    protected void onResume() {
-        super.onResume();
-        userinfo = BmobUser.getCurrentUser(getApplicationContext(), Muser.class);
     }
 
     private void initListener() {
@@ -82,7 +73,8 @@ public class UploadGoods extends AppCompatActivity implements View.OnClickListen
         mGoodsPic2.setOnClickListener(this);
         mGoodsPic3.setOnClickListener(this);
     }
-//上传商品信息
+
+    //上传商品信息
     private void UploadGoodsInfo() {
         final UserGoods goods = new UserGoods();
         String gDescribe = mGoodsDescribe.getText().toString();
@@ -134,59 +126,45 @@ public class UploadGoods extends AppCompatActivity implements View.OnClickListen
                 goods.setPic2(mpicture2);
                 goods.setPic3(mpicture3);
 //                依次加载图片信息和上传商品信息
-                goods.getPic1().upload(getApplicationContext(), new UploadFileListener() {
+                goods.getPic1().upload(new UploadFileListener() {
                     @Override
-                    public void onSuccess() {
-                        Toast.makeText(getApplicationContext(), "图片1上传成功", Toast.LENGTH_SHORT).show();
-                          goods.getPic2().upload(getApplicationContext(), new UploadFileListener() {
-                              @Override
-                            public void onSuccess() {
-                                Toast.makeText(getApplicationContext(), "图片2上传成功", Toast.LENGTH_SHORT).show();
-                                goods.getPic3().upload(getApplicationContext(), new UploadFileListener() {
-                                    @Override
-                                    public void onSuccess() {
-                                        Toast.makeText(getApplicationContext(), "图片3上传成功", Toast.LENGTH_SHORT).show();
-                                        goods.setIssellde(false);
-                                        if (mGoodsWttrade.getText().toString() != null) {
-                                            goods.setWttrade(mGoodsWttrade.getText().toString());
-                                        }
-                                        goods.setMaster(userinfo);
-
-                                        goods.save(getApplicationContext(), new SaveListener() {
+                    public void done(BmobException e) {
+                        if (e == null) {
+                            showToastS("图片1上传成功");
+                            goods.getPic2().upload(new UploadFileListener() {
+                                @Override
+                                public void done(BmobException e) {
+                                    if (e == null) {
+                                        showToastS("图片2上传成功");
+                                        goods.getPic3().upload(new UploadFileListener() {
                                             @Override
-                                            public void onSuccess() {
-                                                Toast.makeText(getApplicationContext(), "宝贝上传成功", Toast.LENGTH_SHORT).show();
-                                                setResult(RESULT_OK);
-                                            }
+                                            public void done(BmobException e) {
+                                                if (e == null) {
+                                                    showToastS("图片3上传成功");
+                                                    goods.setIssellde(false);
+                                                    if (mGoodsWttrade.getText().toString() != null) {
+                                                        goods.setWttrade(mGoodsWttrade.getText().toString());
+                                                    }
+                                                    goods.setMaster(userinfo);
 
-                                            @Override
-                                            public void onFailure(int i, String s) {
-                                                Toast.makeText(getApplicationContext(), "宝贝上传失败" + s, Toast.LENGTH_SHORT).show();
-
+                                                    goods.save(new SaveListener<String>() {
+                                                        @Override
+                                                        public void done(String s, BmobException e) {
+                                                            if (e == null) {
+                                                                showToastS("宝贝上传成功");
+                                                                setResult(RESULT_OK);
+                                                            } else {
+                                                                showToastS("宝贝上传失败");
+                                                            }
+                                                        }
+                                                    });
+                                                }
                                             }
                                         });
                                     }
-
-                                    @Override
-                                    public void onFailure(int i, String s) {
-                                        Toast.makeText(getApplicationContext(), "图片3上传失败" + s, Toast.LENGTH_SHORT).show();
-
-                                    }
-                                });
-                            }
-
-                            @Override
-                            public void onFailure(int i, String s) {
-                                Toast.makeText(getApplicationContext(), "图片2上传失败" + s, Toast.LENGTH_SHORT).show();
-
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void onFailure(int i, String s) {
-                        Toast.makeText(getApplicationContext(), "图片1上传失败" + s, Toast.LENGTH_SHORT).show();
-
+                                }
+                            });
+                        }
                     }
                 });
 
@@ -197,7 +175,7 @@ public class UploadGoods extends AppCompatActivity implements View.OnClickListen
 
     }
 
-    private void initview() {
+    private void setview() {
         mcategorylist = new ArrayList<>();
         mcategorylist.add("工具类");
         mcategorylist.add("服装类");
@@ -241,7 +219,7 @@ public class UploadGoods extends AppCompatActivity implements View.OnClickListen
         mGoodsUpload = (Button) findViewById(R.id.goods_upload_btn);
     }
 
-//选择商品的图片来源
+    //选择商品的图片来源
     private void getPicForChoiceMot() {
         CharSequence[] items = {"相册", "相机"};
         new AlertDialog.Builder(this).setTitle("选择物品图片来源").setItems(items,
@@ -259,7 +237,8 @@ public class UploadGoods extends AppCompatActivity implements View.OnClickListen
                     }
                 }).create().show();
     }
-//保存图片
+
+    //保存图片
     private Uri saveBitmap(Bitmap bm) {
         File tmpDir = new File(Environment.getExternalStorageDirectory() + "/com.wangfuhe.Second_shop");
         if (!tmpDir.exists()) {
@@ -292,7 +271,8 @@ public class UploadGoods extends AppCompatActivity implements View.OnClickListen
             return null;
         }
     }
-//重置图片路径
+
+    //重置图片路径
     private Uri convertUri(Uri uri) {
         InputStream is = null;
         try {

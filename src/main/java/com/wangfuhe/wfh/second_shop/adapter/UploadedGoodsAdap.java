@@ -37,7 +37,7 @@ public class UploadedGoodsAdap extends BaseAdapter implements AbsListView.OnScro
         mImageLoderUtil=new ImageLoderUtil(listView);
         GoodsId=new String[uploadGoods.size()];
         for (int i=0;i<uploadGoods.size();i++){
-            GoodsId[i]=uploadGoods.get(i).getPic1().getFileUrl(mcontext);
+            GoodsId[i]=uploadGoods.get(i).getPic1().getFileUrl();
         }
         mFirst=true;
         listView.setOnScrollListener(this);
@@ -74,8 +74,8 @@ public class UploadedGoodsAdap extends BaseAdapter implements AbsListView.OnScro
             viewHolder=(ViewHolder)convertView.getTag();
         }
         UserGoods bean=UploadGoods.get(position);
-        viewHolder.mImageView.setTag(bean.getPic1().getFileUrl(mContext));
-        mImageLoderUtil.showImageByTast(viewHolder.mImageView, bean.getPic1().getFileUrl(mContext));
+        viewHolder.mImageView.setTag(bean.getPic1().getFileUrl());
+        mImageLoderUtil.showImageByTast(viewHolder.mImageView, bean.getPic1().getFileUrl());
         viewHolder.mdescribe.setText(bean.getDescribe());
 //        Log.i("wangfuhe","listview显示"+bean.getMaxprice().toString());
         viewHolder.mprice.setText("￥"+String.valueOf(bean.getMinprice()));

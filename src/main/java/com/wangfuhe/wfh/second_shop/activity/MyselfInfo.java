@@ -19,7 +19,6 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.MediaStore;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -27,9 +26,9 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.wangfuhe.wfh.second_shop.R;
+import com.wangfuhe.wfh.second_shop.base.BaseActivity;
 import com.wangfuhe.wfh.second_shop.user.Muser;
 
 import java.io.File;
@@ -41,11 +40,12 @@ import java.io.InputStream;
 
 import cn.bmob.v3.BmobUser;
 import cn.bmob.v3.datatype.BmobFile;
+import cn.bmob.v3.exception.BmobException;
 import cn.bmob.v3.listener.DownloadFileListener;
 import cn.bmob.v3.listener.UpdateListener;
 import cn.bmob.v3.listener.UploadFileListener;
 
-public class MyselfInfo extends AppCompatActivity implements View.OnClickListener {
+public class MyselfInfo extends BaseActivity implements View.OnClickListener {
 
     public final static int CONSULT_DOC_PICTURE = 1000;//获取本地照片的回调码
     public final static int CONSULT_DOC_CAMERA = 1001;//获取照相机的回调码
@@ -58,7 +58,6 @@ public class MyselfInfo extends AppCompatActivity implements View.OnClickListene
     private RadioButton mMale, mFemale;
     private EditText mAddress, mPhone, mEmail, mQQ;
     private Button mSave;
-    private Muser userinfo;
     private Boolean ismale = true;
     private ImageView mTopPic;
     private BmobFile musertop;
@@ -71,27 +70,9 @@ public class MyselfInfo extends AppCompatActivity implements View.OnClickListene
         }
     };
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    public void initview() {
         setContentView(R.layout.activity_myself_info);
         mContext = this;
-        initview();//初始化视图
-        intilistern();//建立监听
-        //获取当前用户
-        userinfo = BmobUser.getCurrentUser(getApplicationContext(), Muser.class);
-        if (userinfo != null) {
-            setuserinfo(userinfo);
-        }
-    }
-
-    private void intilistern() {
-        mUser_name.setOnClickListener(this);
-        mSave.setOnClickListener(this);
-        mTopPic.setOnClickListener(this);
-
-    }
-
-    private void initview() {
         mUser_name = (TextView) findViewById(R.id.user_name_tv);
         mMale = (RadioButton) findViewById(R.id.user_male_rb);
         mFemale = (RadioButton) findViewById(R.id.user_female_rb);
@@ -103,8 +84,20 @@ public class MyselfInfo extends AppCompatActivity implements View.OnClickListene
         mTopPic = (ImageView) findViewById(R.id.user_top_pic_im);
         if (userinfo == null) {
             mSave.setEnabled(false);
-            Log.i("wangfuhe","button_false");
+            setLog("button_false");
         }
+        intilistern();//建立监听
+        //获取当前用户
+        if (userinfo != null) {
+            setuserinfo(userinfo);
+        }
+    }
+
+    private void intilistern() {
+        mUser_name.setOnClickListener(this);
+        mSave.setOnClickListener(this);
+        mTopPic.setOnClickListener(this);
+
     }
 
     @Override
@@ -148,38 +141,34 @@ public class MyselfInfo extends AppCompatActivity implements View.OnClickListene
         }
         if (musertop != null) {
             newuser.setToppic(musertop);
-            newuser.getToppic().upload(getApplicationContext(), new UploadFileListener() {
+            newuser.getToppic().uploadblock(new UploadFileListener() {
                 @Override
-                public void onSuccess() {
-                    //由于头像上传为异步加载当头像上传完在上传对象
-                    newuser.update(getApplicationContext(), userinfo.getObjectId(), new UpdateListener() {
-                        @Override
-                        public void onSuccess() {
-                            Toast.makeText(getApplicationContext(), "保存成功", Toast.LENGTH_SHORT).show();
-                        }
-
-                        @Override
-                        public void onFailure(int i, String s) {
-                            Toast.makeText(getApplicationContext(), "保存失败" + s, Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                }
-
-                @Override
-                public void onFailure(int i, String s) {
-                    Log.i("wangfuhe", "头像上传成功");
+                public void done(BmobException e) {
+                    if (e==null){
+                        newuser.update(userinfo.getObjectId(), new UpdateListener() {
+                            @Override
+                            public void done(BmobException e) {
+                            if (e==null) {
+                                showToastS("保存成功");
+                            }else {
+                                showToastS("保存失败"+e.getMessage());
+                            }
+                            }
+                        });
+                    }else {
+                        setLog("头像上传失败");
+                    }
                 }
             });
         }else {
-            newuser.update(getApplicationContext(), userinfo.getObjectId(), new UpdateListener() {
+            newuser.update(userinfo.getObjectId(), new UpdateListener() {
                 @Override
-                public void onSuccess() {
-                    Toast.makeText(getApplicationContext(), "保存成功", Toast.LENGTH_SHORT).show();
-                }
-
-                @Override
-                public void onFailure(int i, String s) {
-                    Toast.makeText(getApplicationContext(), "保存失败" + s, Toast.LENGTH_SHORT).show();
+                public void done(BmobException e) {
+                    if (e==null){
+                        showToastS("保存成功");
+                    }else {
+                        showToastS("保存失败"+e.getMessage());
+                    }
                 }
             });
         }
@@ -263,7 +252,7 @@ public class MyselfInfo extends AppCompatActivity implements View.OnClickListene
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == MYSELF_LOGIN) {
             if (resultCode == RESULT_OK) {
-               userinfo = BmobUser.getCurrentUser(getApplicationContext(), Muser.class);
+               userinfo = BmobUser.getCurrentUser(Muser.class);
             }
         }
         if (requestCode == CONSULT_DOC_CAMERA) {
@@ -334,29 +323,31 @@ public class MyselfInfo extends AppCompatActivity implements View.OnClickListene
         }
         final File img = new File(tmpDir.getAbsolutePath() + "usertoppic.png");
         Log.i("wangfuhe", tmpDir.getAbsolutePath());
-        userinfo.getToppic().download(getApplicationContext()
-                , img, new DownloadFileListener() {
+        userinfo.getToppic().download(img, new DownloadFileListener() {
             @Override
-            public void onSuccess(String s) {
-                Log.i("wangfuhe", "下载成功");
-                try {
-                    Log.i("wangfuhe", "设置头像前");
-                    FileInputStream fis = new FileInputStream(img);
-                    Bitmap bitmap = BitmapFactory.decodeStream(fis);
-                    fis.close();
-                    mTopPic.setImageBitmap(bitmap);
-                    Log.i("wangfuhe", "设置头像");
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+            public void onProgress(Integer integer, long l) {
+
             }
 
             @Override
-            public void onFailure(int i, String s) {
-                Log.i("wangfuhe", "下载失败");
-
+            public void done(String s, BmobException e) {
+                if (e==null){
+                    setLog("下载成功");
+                    try {
+                        setLog("设置头像前");
+                        FileInputStream fis = new FileInputStream(img);
+                        Bitmap bitmap = BitmapFactory.decodeStream(fis);
+                        fis.close();
+                        mTopPic.setImageBitmap(bitmap);
+                        setLog("设置头像");
+                    } catch (FileNotFoundException ef) {
+                        ef.printStackTrace();
+                    } catch (IOException ef) {
+                        ef.printStackTrace();
+                    }
+                }else {
+                    setLog("下载失败");
+                }
             }
         });
     }

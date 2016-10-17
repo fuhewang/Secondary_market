@@ -16,6 +16,7 @@ import android.widget.Toast;
 import com.wangfuhe.wfh.second_shop.R;
 import com.wangfuhe.wfh.second_shop.user.Muser;
 
+import cn.bmob.v3.exception.BmobException;
 import cn.bmob.v3.listener.SaveListener;
 
 public class LoginActivity extends AppCompatActivity {
@@ -42,17 +43,16 @@ public class LoginActivity extends AppCompatActivity {
                 Muser muser = new Muser();
                 muser.setPassword(userpasswd);
                 muser.setUsername(username);
-                muser.login(LoginActivity.this, new SaveListener() {
+                muser.login(new SaveListener<Muser>() {
                     @Override
-                    public void onSuccess() {
-                        Toast.makeText(getApplicationContext(), "登入成功", Toast.LENGTH_SHORT).show();
-                        setResult(RESULT_OK);
-                        onBackPressed();
-                    }
-
-                    @Override
-                    public void onFailure(int i, String s) {
-                        Toast.makeText(getApplicationContext(), "登入失败" + s, Toast.LENGTH_SHORT).show();
+                    public void done(Muser muser, BmobException e) {
+                        if (e==null){
+                            Toast.makeText(getApplicationContext(), "登入成功", Toast.LENGTH_SHORT).show();
+                            setResult(RESULT_OK);
+                            onBackPressed();
+                        }else {
+                            Toast.makeText(getApplicationContext(), "登入失败" + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
                     }
                 });
             }

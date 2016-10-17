@@ -5,13 +5,11 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -19,6 +17,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.wangfuhe.wfh.second_shop.R;
+import com.wangfuhe.wfh.second_shop.base.BaseActivity;
 import com.wangfuhe.wfh.second_shop.fragment.FragmenThree;
 import com.wangfuhe.wfh.second_shop.fragment.FragmenTwo;
 import com.wangfuhe.wfh.second_shop.fragment.FragmentOne;
@@ -35,11 +34,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cn.bmob.v3.BmobQuery;
-import cn.bmob.v3.BmobUser;
+import cn.bmob.v3.exception.BmobException;
 import cn.bmob.v3.listener.FindListener;
 import cn.bmob.v3.listener.UpdateListener;
 
-public class Instanview extends AppCompatActivity {
+public class Instanview extends BaseActivity {
 
     private ViewPager mShowPic;
     private ArrayList<Fragment> fragments=new ArrayList<>();
@@ -53,7 +52,6 @@ public class Instanview extends AppCompatActivity {
     private TextView mprice;
     private TextView msellerinfo;
     private Button mcollect;
-    private Muser userinfo;
     private Button mconection;
     private Handler mHandler=new Handler(){
         @Override
@@ -74,11 +72,9 @@ public class Instanview extends AppCompatActivity {
         }
     };
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    public void initview() {
         setContentView(R.layout.activity_instanview);
         mIntent=this.getIntent();
-        userinfo= BmobUser.getCurrentUser(getApplicationContext(),Muser.class);
         mgoods= (UserGoods) mIntent.getExtras().getSerializable("goods");
     }
 
@@ -100,18 +96,18 @@ public class Instanview extends AppCompatActivity {
             public void run() {
                 super.run();
                 BmobQuery<Muser> query=new BmobQuery<Muser>();
-                query.addWhereEqualTo("objectId",mgoods.getMaster().getObjectId().toString());
-                query.findObjects(getApplicationContext(), new FindListener<Muser>() {
+                query.addWhereEqualTo("objectId", mgoods.getMaster().getObjectId().toString());
+                query.findObjects(new FindListener<Muser>() {
                     @Override
-                    public void onSuccess(List<Muser> list) {
-                        if(list.size()!=0) {
-                            mgoods.setMaster(list.get(0));
-                            mHandler.sendEmptyMessage(0);
+                    public void done(List<Muser> list, BmobException e) {
+                        if (e==null){
+                            if(list.size()!=0) {
+                                mgoods.setMaster(list.get(0));
+                                mHandler.sendEmptyMessage(0);
+                            }
+                        }else{
+                            Log.i("wangfuhe","master查询失败");
                         }
-                    }
-                    @Override
-                    public void onError(int i, String s) {
-                        Log.i("wangfuhe","master查询失败");
                     }
                 });
             }
@@ -120,15 +116,14 @@ public class Instanview extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                mgoods.setCollector(userinfo);
-                mgoods.update(getApplicationContext(), new UpdateListener() {
+                mgoods.update(new UpdateListener() {
                     @Override
-                    public void onSuccess() {
-                        Toast.makeText(getApplicationContext(),"收藏成功",Toast.LENGTH_SHORT).show();
-                    }
-
-                    @Override
-                    public void onFailure(int i, String s) {
-                        Toast.makeText(getApplicationContext(),"收藏失败"+s,Toast.LENGTH_SHORT).show();
+                    public void done(BmobException e) {
+                        if (e == null) {
+                            Toast.makeText(getApplicationContext(), "收藏成功", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(getApplicationContext(), "收藏失败" + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
                     }
                 });
             }
@@ -153,7 +148,7 @@ public class Instanview extends AppCompatActivity {
         mShowPic.setCurrentItem(1);
     }
 
-    private void initview() {
+    private void setview() {
         mOne=new FragmentOne();
         mTwo=new FragmenTwo();
         mThree =new FragmenThree();
@@ -198,9 +193,9 @@ public class Instanview extends AppCompatActivity {
 
         @Override
         protected Void doInBackground(UserGoods... params) {
-            pic1=getBitmapFromUrl(params[0].getPic1().getFileUrl(getApplicationContext()));
-            pic2=getBitmapFromUrl(params[0].getPic2().getFileUrl(getApplicationContext()));
-            pic3=getBitmapFromUrl(params[0].getPic3().getFileUrl(getApplicationContext()));
+            pic1=getBitmapFromUrl(params[0].getPic1().getFileUrl());
+            pic2=getBitmapFromUrl(params[0].getPic2().getFileUrl());
+            pic3=getBitmapFromUrl(params[0].getPic3().getFileUrl());
             return null;
         }
 
@@ -209,7 +204,7 @@ public class Instanview extends AppCompatActivity {
             super.onPostExecute(aVoid);
             if (pic1!=null&&pic2!=null&&pic3!=null)
             {
-                initview();
+                setview();
                 initviewpager();
                 setView();
             }

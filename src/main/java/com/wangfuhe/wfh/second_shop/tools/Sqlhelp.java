@@ -3,6 +3,7 @@ package com.wangfuhe.wfh.second_shop.tools;
 import android.content.Context;
 import android.os.Handler;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.wangfuhe.wfh.second_shop.user.UserGoods;
 
@@ -10,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cn.bmob.v3.BmobQuery;
+import cn.bmob.v3.exception.BmobException;
 import cn.bmob.v3.listener.FindListener;
 
 /**
@@ -32,20 +34,19 @@ public class Sqlhelp {
                 queries.add(query2);
                 BmobQuery<UserGoods> query = new BmobQuery<>();
                 query.and(queries);
-                query.findObjects(context, new FindListener<UserGoods>() {
+                query.findObjects(new FindListener<UserGoods>() {
                     @Override
-                    public void onSuccess(List<UserGoods> list) {
-                        if (list != null) {
-                            goodses.clear();
-                            goodses.addAll(list);
-                            handler.sendEmptyMessage(1);
-                            Log.i("wangfuhe","浮标查询：进行查询了");
+                    public void done(List<UserGoods> list, BmobException e) {
+                        if (e==null){
+                            if (list != null) {
+                                goodses.clear();
+                                goodses.addAll(list);
+                                handler.sendEmptyMessage(1);
+                                Log.i("wfh","浮标查询：进行查询了");
+                            }
+                        }else {
+                            handler.sendEmptyMessage(0);
                         }
-                    }
-
-                    @Override
-                    public void onError(int i, String s) {
-                        handler.sendEmptyMessage(0);
                     }
                 });
             }
@@ -67,20 +68,22 @@ public class Sqlhelp {
                 queries.add(query1);
                 queries.add(query2);
                 BmobQuery<UserGoods> query = new BmobQuery<>();
-                query.and(queries);
-                query.findObjects(context, new FindListener<UserGoods>() {
+                query.or(queries);
+                query.findObjects(new FindListener<UserGoods>() {
                     @Override
-                    public void onSuccess(List<UserGoods> list) {
-                        if (list != null) {
-                            goodses.clear();
-                            goodses.addAll(list);
-                            handler.sendEmptyMessage(1);
-                        }
-                    }
+                    public void done(List<UserGoods> list, BmobException e) {
+                        if (e==null){
+                            if (list != null) {
+                                goodses.clear();
+                                goodses.addAll(list);
+                                Log.i("wfh",search);
+                                handler.sendEmptyMessage(1);
+                                Toast.makeText(context,"由于Bmob的模糊查询突然要收费了，暂停服务",Toast.LENGTH_SHORT).show();
+                            }
+                        }else {
+                            handler.sendEmptyMessage(0);
 
-                    @Override
-                    public void onError(int i, String s) {
-                        handler.sendEmptyMessage(0);
+                        }
                     }
                 });
             }

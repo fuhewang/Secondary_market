@@ -14,7 +14,7 @@ import com.wangfuhe.wfh.second_shop.user.Muser;
 
 import cn.bmob.v3.BmobSMS;
 import cn.bmob.v3.exception.BmobException;
-import cn.bmob.v3.listener.RequestSMSCodeListener;
+import cn.bmob.v3.listener.QueryListener;
 import cn.bmob.v3.listener.SaveListener;
 
 public class RegisterActivity extends Activity {
@@ -67,16 +67,17 @@ public class RegisterActivity extends Activity {
     }
 
     private void getidentifying_code() {
-        BmobSMS.requestSMSCode(getApplicationContext(), mtelephone.getText().toString(),
-                "wfh", new RequestSMSCodeListener() {
-                    @Override
-                    public void done(Integer integer, BmobException e) {
-                        if (e == null) {
-                            Log.i("wangfuhe", "短信id" + integer);
-                        }
-                        Log.i("wangfuhe", mtelephone.getText().toString());
-                    }
-                });
+        BmobSMS.requestSMSCode(mtelephone.getText().toString(), "wfh",new QueryListener<Integer>() {
+
+            @Override
+            public void done(Integer smsId,BmobException ex) {
+                if(ex==null){//验证码发送成功
+                    Log.i("wangfuhe", "短信id" + smsId);
+                }else {
+                    Log.i("wangfuhe", mtelephone.getText().toString());
+                }
+            }
+        });
     }
 
     private void registeruser() {
@@ -85,20 +86,18 @@ public class RegisterActivity extends Activity {
              muser.setMobilePhoneNumber(mtelephone.getText().toString());
              muser.setUsername(mAccount.getText().toString());
             muser.setPassword(mAPasswd.getText().toString());
-            muser.signOrLogin(getApplicationContext(), mIdentifying_code.getText().toString(),
-                    new SaveListener() {
-                        @Override
-                        public void onSuccess() {
-                            Toast.makeText(getApplicationContext(), "登录成功", Toast.LENGTH_SHORT).show();
-                            setResult(RESULT_OK);
-                        }
+            muser.signOrLogin("验证码", new SaveListener<Muser>() {
 
-                        @Override
-                        public void onFailure(int i, String s) {
-                            Toast.makeText(getApplicationContext(), "登录失败"+s, Toast.LENGTH_SHORT).show();
-
-                        }
-                    });
+                @Override
+                public void done(Muser user, BmobException e) {
+                    if (user != null) {
+                        Toast.makeText(getApplicationContext(), "登录成功", Toast.LENGTH_SHORT).show();
+                        setResult(RESULT_OK);
+                    }else {
+                        Toast.makeText(getApplicationContext(), "登录失败"+e.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
         }else {
             Toast.makeText(this,"密码输入错误，请重新输入",Toast.LENGTH_SHORT).show();
         }

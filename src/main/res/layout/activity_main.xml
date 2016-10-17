@@ -7,6 +7,11 @@
     android:orientation="vertical"
     android:background="#e2e0e0">
     <LinearLayout
+        android:padding="2dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#ffffffff">
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="30dp"
         android:background="@drawable/search_bg"
@@ -34,7 +39,9 @@
             android:layout_gravity="center_vertical"
             />
     </LinearLayout>
+    </LinearLayout>
     <android.support.v7.widget.RecyclerView
+        android:layout_marginTop="10dp"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@+id/recycler_view"

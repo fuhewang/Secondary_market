@@ -33,7 +33,7 @@ public class Myadapter extends RecyclerView.Adapter<Myadapter.MyViewHolder> {
         mIndexImageLoderUtil=new IndexImageLoderUtil(recyclerView);
         GoodsId=new String[goodses.size()];
         for (int i=0;i<goodses.size();i++){
-            GoodsId[i]=goodses.get(i).getPic1().getFileUrl(mContext);
+            GoodsId[i]=goodses.get(i).getPic1().getFileUrl();
         }
         mFirst=true;
 
@@ -82,8 +82,8 @@ public class Myadapter extends RecyclerView.Adapter<Myadapter.MyViewHolder> {
         ViewGroup.LayoutParams params = holder.itemView.getLayoutParams();
         params.height = heights.get(position);
         holder.itemView.setLayoutParams(params);
-        holder.mImageView.setTag(goods.getPic1().getFileUrl(mContext));
-        mIndexImageLoderUtil.showImageByTast(holder.mImageView, goods.getPic1().getFileUrl(mContext));
+        holder.mImageView.setTag(goods.getPic1().getFileUrl());
+        mIndexImageLoderUtil.showImageByTast(holder.mImageView, goods.getPic1().getFileUrl());
         holder.mDescribe.setText(goods.getDescribe());
         holder.mPrice.setText("￥"+String.valueOf(goods.getMinprice())+"~"
                 +String.valueOf(goods.getMaxprice()));

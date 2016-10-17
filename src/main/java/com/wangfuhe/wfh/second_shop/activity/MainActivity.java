@@ -4,12 +4,13 @@ import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 import android.os.AsyncTask;
-import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.util.Log;
@@ -19,13 +20,13 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.oguzdev.circularfloatingactionmenu.library.FloatingActionButton;
 import com.oguzdev.circularfloatingactionmenu.library.FloatingActionMenu;
 import com.oguzdev.circularfloatingactionmenu.library.SubActionButton;
 import com.wangfuhe.wfh.second_shop.R;
 import com.wangfuhe.wfh.second_shop.adapter.Myadapter;
+import com.wangfuhe.wfh.second_shop.base.BaseActivity;
 import com.wangfuhe.wfh.second_shop.tools.Sqlhelp;
 import com.wangfuhe.wfh.second_shop.user.Muser;
 import com.wangfuhe.wfh.second_shop.user.UserGoods;
@@ -33,26 +34,31 @@ import com.wangfuhe.wfh.second_shop.user.UserGoods;
 import net.simonvt.menudrawer.MenuDrawer;
 import net.simonvt.menudrawer.Position;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import cn.bmob.v3.BmobQuery;
 import cn.bmob.v3.BmobUser;
+import cn.bmob.v3.exception.BmobException;
+import cn.bmob.v3.listener.DownloadFileListener;
 import cn.bmob.v3.listener.FindListener;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class MainActivity extends BaseActivity implements View.OnClickListener {
 
     public final static int MENU_UPLOAD_PIC = 1002;//上传物品界面的回调码
     public final static int UPLOADEDGOODS = 3;//已上传物品的回调码
-
     private ArrayList<UserGoods> goodses;
     private RecyclerView mrecyclerView;
     private MenuDrawer mMenuDrawer;
     private Button msearch_btn;
     private RelativeLayout mSelf, mShop, mIdex, muserback, musercollect, muserselled;
     private TextView musername;
+    private ImageView muserhpic;
     private Context mContext;
-    private Muser userinfo;
     private EditText msearch;
     private Myadapter mMyadapter;
     private static final int MAIN_LOGIN_CODE = 999;
@@ -62,16 +68,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             super.handleMessage(msg);
             if (msg.what == 1) {
                 mMyadapter.notifyDataSetChanged();
-                Log.i("wangfuhe","浮标查询返回正确");
-            }else {
-                Log.i("wangfuhe","浮标查询返回出错");
+                setLog("浮标查询返回正确");
+            } else {
+                setLog("浮标查询返回出错");
             }
         }
     };
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    public void initview() {
         setContentView(R.layout.activity_main);
         //初始化侧滑菜单
         initMenu();
@@ -83,7 +88,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         rightlowButton();
         //赋值上下文
         mContext = this;
-
     }
 
     private void setwaterfall() {
@@ -91,24 +95,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mrecyclerView.setLayoutManager(new StaggeredGridLayoutManager(2,
                 StaggeredGridLayoutManager.VERTICAL));
         new MyAsynTask().execute();
-//        mMyadapter = new Myadapter(this, goodses);
-        //初始化回掉监听和所有的控件监听
-//        initlisterner(mMyadapter);
-//        mrecyclerView.setAdapter(mMyadapter);
-//        //设置瀑布流item之间的距离
-//        SpaceItem spaceItem = new SpaceItem(16);
-//        mrecyclerView.addItemDecoration(spaceItem);
-//        lac.setOrder(LayoutAnimationController.ORDER_NORMAL);
-//        mrecyclerView.setLayoutAnimation(lac);
-//        mrecyclerView.startLayoutAnimation();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        this.userinfo = BmobUser.getCurrentUser(getApplicationContext(), Muser.class);
         if (userinfo != null) {
             musername.setText(userinfo.getUsername());
+            setTopPic(userinfo);
         }
     }
 
@@ -126,9 +120,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         musercollect = (RelativeLayout) findViewById(R.id.menu_collected_rl);
         muserselled = (RelativeLayout) findViewById(R.id.menu_salesed_rl);
         musername = (TextView) findViewById(R.id.user_name_tv);
+        muserhpic = (ImageView) findViewById(R.id.user_top_pic_im);
         msearch = (EditText) findViewById(R.id.search_et);
-        msearch_btn= (Button) findViewById(R.id.search_btn);
+        msearch_btn = (Button) findViewById(R.id.search_btn);
         msearch.clearFocus();
+        muserhpic.setOnClickListener(this);
         msearch_btn.setOnClickListener(this);
         mSelf.setOnClickListener(this);
         mIdex.setOnClickListener(this);
@@ -238,7 +234,43 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onClick(View v) {
                 Sqlhelp.GetUserGoodsByCategory(getApplicationContext(), "工具类", mHandler, goodses);
-                Log.i("wangfuhe","工具类点击了");
+                Log.i("wangfuhe", "工具类点击了");
+            }
+        });
+    }
+
+    private void setTopPic(Muser userinfo) {
+        File tmpDir = new File(Environment.getExternalStorageDirectory() + "/com.wangfuhe.Second_shop");
+        if (!tmpDir.exists()) {
+            tmpDir.mkdir();
+        }
+        final File img = new File(tmpDir.getAbsolutePath() + "usertoppic.png");
+        Log.i("wangfuhe", tmpDir.getAbsolutePath());
+        userinfo.getToppic().download(img, new DownloadFileListener() {
+            @Override
+            public void onProgress(Integer integer, long l) {
+
+            }
+
+            @Override
+            public void done(String s, BmobException e) {
+                if (e == null) {
+                    setLog("下载成功");
+                    try {
+                        setLog("设置头像前");
+                        FileInputStream fis = new FileInputStream(img);
+                        Bitmap bitmap = BitmapFactory.decodeStream(fis);
+                        fis.close();
+                        muserhpic.setImageBitmap(bitmap);
+                        setLog("设置头像");
+                    } catch (FileNotFoundException ef) {
+                        ef.printStackTrace();
+                    } catch (IOException ef) {
+                        ef.printStackTrace();
+                    }
+                } else {
+                    setLog("下载失败");
+                }
             }
         });
     }
@@ -255,22 +287,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.menu_self_info_rl:
                 Intent it = new Intent(MainActivity.this, MyselfInfo.class);
                 startActivityForResult(it, 2);
-//                overridePendingTransition(R.anim.outscaleanim,R.anim.inscaleanim);
                 mMenuDrawer.closeMenu();
                 break;
-//            case R.id.user_top_pic_im:
-//                getPicForTop();
-//                break;
             case R.id.menu_purchased_rl:
                 mMenuDrawer.closeMenu();
                 Intent uploadedit = new Intent(MainActivity.this, UploadedGoods.class);
                 startActivityForResult(uploadedit, UPLOADEDGOODS);
                 break;
             case R.id.menu_back_rl:
-                BmobUser.logOut(getApplicationContext());   //清除缓存用户对象
+                BmobUser.logOut();   //清除缓存用户对象
                 // 现在的currentUser是null了
-                this.userinfo = BmobUser.getCurrentUser(getApplicationContext(), Muser.class);
+                this.userinfo = BmobUser.getCurrentUser(Muser.class);
                 musername.setText(R.string.loginorsign);
+                muserhpic.setImageDrawable(getResources().getDrawable(R.mipmap.ic_launcher));
                 mMenuDrawer.closeMenu();
                 break;
             case R.id.menu_collected_rl:
@@ -288,9 +317,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //                overridePendingTransition(R.anim.outscaleanim,R.anim.inscaleanim);
                 break;
             case R.id.search_btn:
-                String search=msearch.getText().toString();
-                if(search!=null){
-                    Sqlhelp.GetGoodsBySearch(getApplicationContext(),search,mHandler,goodses);
+                String search = msearch.getText().toString();
+                if (search != null) {
+                    Sqlhelp.GetGoodsBySearch(getApplicationContext(), search, mHandler, goodses);
                 }
                 break;
         }
@@ -327,23 +356,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     BmobQuery<UserGoods> query = new BmobQuery<UserGoods>();
                     //查询当前用户的上传物品
                     query.addWhereEqualTo("issellde", false);
-                    query.findObjects(getApplicationContext(), new FindListener<UserGoods>() {
+                    query.findObjects(new FindListener<UserGoods>() {
                         @Override
-                        public void onSuccess(List<UserGoods> list) {
-                            if (list != null) {
-                                goodses.clear();
-                                if (list.size() != goodses.size()) {
-                                    goodses.addAll(list);
+                        public void done(List<UserGoods> list, BmobException e) {
+                            if (e == null) {
+                                if (list != null) {
+                                    goodses.clear();
+                                    if (list.size() != goodses.size()) {
+                                        goodses.addAll(list);
+                                    }
+                                    if (mMyadapter != null) {
+                                        mMyadapter.notifyDataSetChanged();
+                                    }
                                 }
-                                if (mMyadapter != null) {
-                                    mMyadapter.notifyDataSetChanged();
-                                }
+                            } else {
+                                showToastS("数据查询出错");
                             }
-                        }
-
-                        @Override
-                        public void onError(int i, String s) {
-                            Toast.makeText(getApplicationContext(), "数据查询出错", Toast.LENGTH_SHORT).show();
                         }
                     });
                 }
@@ -351,9 +379,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         if (requestCode == MAIN_LOGIN_CODE) {
             if (resultCode == RESULT_OK) {
-                userinfo = BmobUser.getCurrentUser(getApplicationContext(), Muser.class);
+                userinfo = BmobUser.getCurrentUser(Muser.class);
                 if (userinfo != null) {
                     musername.setText(userinfo.getUsername());
+                    setTopPic(userinfo);
                 }
             }
         }
@@ -366,30 +395,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             BmobQuery<UserGoods> query = new BmobQuery<UserGoods>();
             //查询当前用户的上传物品
             query.addWhereEqualTo("issellde", false);
-            query.findObjects(getApplicationContext(), new FindListener<UserGoods>() {
+            query.findObjects(new FindListener<UserGoods>() {
                 @Override
-                public void onSuccess(List<UserGoods> list) {
-                    Toast.makeText(getApplicationContext(), "下载成功", Toast.LENGTH_SHORT).show();
-                    Log.i("wangfuhe", "首页查询数目" + list.size());
-                    if (list != null)
-                        if (list.size() != goodses.size()) {
-                            goodses.addAll(list);
-                        }
+                public void done(List<UserGoods> list, BmobException e) {
+                    if (e == null) {
+                        showToastS("下载成功");
+                        setLog("首页查询数目" + list.size());
+                        if (list != null)
+                            if (list.size() != goodses.size()) {
+                                goodses.addAll(list);
+                            }
 
 
-                    mMyadapter = new Myadapter(getApplicationContext(),
-                            goodses, mrecyclerView);
-                    //初始化回掉监听和所有的控件监听
-                    initlisterner(mMyadapter);
-                    mrecyclerView.setAdapter(mMyadapter);
-                    //设置瀑布流item之间的距离
-                    SpaceItem spaceItem = new SpaceItem(16);
-                    mrecyclerView.addItemDecoration(spaceItem);
-                }
+                        mMyadapter = new Myadapter(getApplicationContext(),
+                                goodses, mrecyclerView);
+                        //初始化回掉监听和所有的控件监听
+                        initlisterner(mMyadapter);
+                        mrecyclerView.setAdapter(mMyadapter);
+                        //设置瀑布流item之间的距离
+                        SpaceItem spaceItem = new SpaceItem(16);
+                        mrecyclerView.addItemDecoration(spaceItem);
+                    } else {
+                        showToastS("数据查询出错");
 
-                @Override
-                public void onError(int i, String s) {
-                    Toast.makeText(getApplicationContext(), "数据查询出错", Toast.LENGTH_SHORT).show();
+                    }
                 }
             });
             return goodses;
